@@ -23,5 +23,136 @@ drive = GoogleDrive(gauth)
 download = drive.CreateFile({'id': '1LehLXl5Wg_1Mtp78EmbkDxjoHf6s6nWx'})
 download.GetContentFile('plant_disease_dataset.zip')
 
+"""Unzipping Data folder to content folder called 'dataset'"""
+
 !unzip -u "/content/plant_disease_dataset.zip" -d "/content/dataset"
+
+"""establishing directory paths for train, valid and test"""
+
+training_dir = '/content/dataset/New Plant Diseases Dataset(Augmented)/New Plant Diseases Dataset(Augmented)/train'
+valid_dir = '/content/dataset/New Plant Diseases Dataset(Augmented)/New Plant Diseases Dataset(Augmented)/valid'
+
+"""importing necessary libraries and modules"""
+
+import os
+#import cv2 as cv
+#import glob as gb
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import keras
+from keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
+
+"""listing all classes to which images belong to"""
+
+os.listdir("/content/dataset/new plant diseases dataset(augmented)/New Plant Diseases Dataset(Augmented)/train")
+
+"""Data preprocessing using built in function called preprocessing_input
+
+"""
+
+from keras.applications.vgg19 import VGG19, preprocess_input, decode_predictions
+
+train_dg = ImageDataGenerator(zoom_range = 0.5, shear_range = 0.3, horizontal_flip = True, preprocessing_function = preprocess_input)
+val_dg = ImageDataGenerator(preprocessing_function = preprocess_input)
+
+train = train_dg.flow_from_directory(directory = training_dir, target_size = (256,256), batch_size = 32)
+valid = val_dg.flow_from_directory(directory = valid_dir, target_size = (256,256), batch_size = 32)
+
+t_img, label = train.next()
+t_img.shape
+
+"""visualizing data post preprocessing"""
+
+def plotImage(img_arr, label):
+  for im, l in zip(img_arr, label):
+    plt.figure(figsize = (2,2))
+    plt.imshow(im)
+    plt.show()
+
+plotImage(t_img[:5], label[:5])
+
+from keras.layers import Dense, Flatten
+from keras.models import Model
+import keras
+
+"""creating a base model"""
+
+base_mdl = VGG19(input_shape = (256,256,3), include_top = False)
+for layer in base_mdl.layers:
+  layer.trainable = False
+
+base_mdl.summary()
+
+"""model creation"""
+
+X = Flatten()(base_mdl.output)
+X = Dense(units = 38, activation = 'softmax')(X)
+
+model = Model(base_mdl.input, X)
+
+model.summary()
+
+"""compile model"""
+
+model.compile(optimizer='adam', loss = keras.losses.categorical_crossentropy, metrics = ['accuracy'])
+
+"""early stopping and model check point
+
+early stopping - monitor validation accuracy
+"""
+
+from keras.callbacks import ModelCheckpoint, EarlyStopping
+
+earlystop = EarlyStopping(monitor = 'val_accuracy', min_delta = 0.01, patience = 3, verbose = 1)
+
+modelcheckpt = ModelCheckpoint(filepath = 'plant_best_model.h5', monitor = 'val_accuracy', min_delta = 0.01, patience = 3, verbose = 1, save_best_only = True)
+
+callback = [earlystop, modelcheckpt]
+
+history = model.fit_generator(train, steps_per_epoch = 16, epochs = 50, verbose = 1, callbacks = callback, validation_data=valid, validation_steps = 16)
+
+import pickle
+with open('pkl_mdl', 'wb') as file1:
+  pickle.dump(model, file1)
+
+h = history.history
+print(h.keys())
+
+plt.plot(h['accuracy'], label = 'Accuracy')
+plt.plot(h['val_accuracy'], label = 'Validation Accuracy')
+plt.title('Accuracy vs Validation Accuracy')
+plt.legend()
+plt.show()
+
+plt.plot(h['loss'], label = "Loss")
+plt.plot(h['val_loss'], label = "Validation Loss")
+plt.title('Loss vs Validation Loss')
+plt.show()
+
+from keras.models import load_model
+model = load_model("/content/plant_best_model.h5")
+
+accuracy = model.evaluate_generator(valid)[1]
+print(f"Accuracy of best model: {accuracy*100}%")
+
+classDictionary = dict(zip(list(train.class_indices.values()), list(train.class_indices.keys())))
+classDictionary
+
+def predfunc(path):
+  img = load_img(path, target_size=(256,256))
+  i = img_to_array(img)
+  im = preprocess_input(i)
+  img = np.expand_dims(im, axis=0)
+  #print(img.shape)
+  pred = np.argmax(model.predict(img))
+  print("Image given as input: ", path)
+  print(classDictionary[pred], "\n")
+
+predfunc('/content/dataset/test/test/AppleCedarRust1.JPG')
+predfunc("/content/dataset/test/test/CornCommonRust3.JPG")
+predfunc("/content/dataset/test/test/PotatoEarlyBlight5.JPG")
+predfunc("/content/dataset/test/test/TomatoEarlyBlight6.JPG")
+predfunc("/content/dataset/test/test/AppleScab2.JPG")
+predfunc("/content/dataset/test/test/TomatoYellowCurlVirus1.JPG")
 
