@@ -59,8 +59,8 @@ val_dg = ImageDataGenerator(preprocessing_function = preprocess_input)
 train = train_dg.flow_from_directory(directory = training_dir, target_size = (256,256), batch_size = 32)
 valid = val_dg.flow_from_directory(directory = valid_dir, target_size = (256,256), batch_size = 32)
 
-t_img, label = train.next()
-t_img.shape
+X_test, label = train.next()
+X_test.shape
 
 """visualizing data post preprocessing"""
 
@@ -141,18 +141,24 @@ classDictionary
 
 def predfunc(path):
   img = load_img(path, target_size=(256,256))
+  print(plt.imshow(img))
   i = img_to_array(img)
   im = preprocess_input(i)
   img = np.expand_dims(im, axis=0)
   #print(img.shape)
   pred = np.argmax(model.predict(img))
   print("Image given as input: ", path)
+  
   print(classDictionary[pred], "\n")
 
 predfunc('/content/dataset/test/test/AppleCedarRust1.JPG')
-predfunc("/content/dataset/test/test/CornCommonRust3.JPG")
-predfunc("/content/dataset/test/test/PotatoEarlyBlight5.JPG")
-predfunc("/content/dataset/test/test/TomatoEarlyBlight6.JPG")
-predfunc("/content/dataset/test/test/AppleScab2.JPG")
-predfunc("/content/dataset/test/test/TomatoYellowCurlVirus1.JPG")
 
+predfunc("/content/dataset/test/test/CornCommonRust3.JPG")
+
+predfunc("/content/dataset/test/test/PotatoEarlyBlight5.JPG")
+
+predfunc("/content/dataset/test/test/TomatoEarlyBlight6.JPG")
+
+predfunc("/content/dataset/test/test/AppleScab2.JPG")
+
+predfunc("/content/dataset/test/test/TomatoYellowCurlVirus1.JPG")
