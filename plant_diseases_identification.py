@@ -32,7 +32,9 @@ download.GetContentFile('plant_disease_dataset.zip')
 training_dir = '/content/dataset/New Plant Diseases Dataset(Augmented)/New Plant Diseases Dataset(Augmented)/train'
 valid_dir = '/content/dataset/New Plant Diseases Dataset(Augmented)/New Plant Diseases Dataset(Augmented)/valid'
 
-"""importing necessary libraries and modules"""
+"""importing necessary libraries and modules
+
+"""
 
 import os
 #import cv2 as cv
@@ -70,7 +72,7 @@ def plotImage(img_arr, label):
     plt.imshow(im)
     plt.show()
 
-plotImage(t_img[:5], label[:5])
+plotImage(X_test[:5], label[:5])
 
 from keras.layers import Dense, Flatten
 from keras.models import Model
@@ -133,12 +135,24 @@ plt.show()
 from keras.models import load_model
 model = load_model("/content/plant_best_model.h5")
 
-accuracy = model.evaluate_generator(valid)[1]
-print(f"Accuracy of best model: {accuracy*100}%")
+# accuracy = model.evaluate_generator(valid)[1]
+# print(f"Accuracy of best model: {accuracy*100}%")
 
 classDictionary = dict(zip(list(train.class_indices.values()), list(train.class_indices.keys())))
 classDictionary
 
+import pandas as pd
+import numpy as np
+df_dict = pd.DataFrame()
+df_dict['Class_ID'] = classDictionary.keys()
+df_dict['Class_Name'] = train.class_indices
+df_dict.to_csv("dictionary_plants.csv")
+
+import matplotlib.pyplot as plt
+import keras
+import numpy as np
+from keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
+from keras.applications.vgg19 import VGG19, preprocess_input, decode_predictions
 def predfunc(path):
   img = load_img(path, target_size=(256,256))
   print(plt.imshow(img))
@@ -149,7 +163,7 @@ def predfunc(path):
   pred = np.argmax(model.predict(img))
   print("Image given as input: ", path)
   
-  print(classDictionary[pred], "\n")
+  print("Predicted class of leaf: ", classDictionary[pred], "\n")
 
 predfunc('/content/dataset/test/test/AppleCedarRust1.JPG')
 
@@ -162,3 +176,53 @@ predfunc("/content/dataset/test/test/TomatoEarlyBlight6.JPG")
 predfunc("/content/dataset/test/test/AppleScab2.JPG")
 
 predfunc("/content/dataset/test/test/TomatoYellowCurlVirus1.JPG")
+
+from PIL import Image
+path = input("Enter the path of the file you would like to predict the disease for :")
+predfunc(path)
+
+"""Demo Test"""
+
+predfunc("/content/badcf57e-def1-4211-b267-94b4008a5fa0___RS_HL 5087.JPG")
+
+predfunc("/content/a0aabeb9-a3b2-4e85-bf3f-9d9892d4c895___RS_HL 4375.JPG")
+
+classDictionary = {0: 'Apple___Apple_scab',
+ 1: 'Apple___Black_rot',
+ 2: 'Apple___Cedar_apple_rust',
+ 3: 'Apple___healthy',
+ 4: 'Blueberry___healthy',
+ 5: 'Cherry_(including_sour)___Powdery_mildew',
+ 6: 'Cherry_(including_sour)___healthy',
+ 7: 'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot',
+ 8: 'Corn_(maize)___Common_rust_',
+ 9: 'Corn_(maize)___Northern_Leaf_Blight',
+ 10: 'Corn_(maize)___healthy',
+ 11: 'Grape___Black_rot',
+ 12: 'Grape___Esca_(Black_Measles)',
+ 13: 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)',
+ 14: 'Grape___healthy',
+ 15: 'Orange___Haunglongbing_(Citrus_greening)',
+ 16: 'Peach___Bacterial_spot',
+ 17: 'Peach___healthy',
+ 18: 'Pepper,_bell___Bacterial_spot',
+ 19: 'Pepper,_bell___healthy',
+ 20: 'Potato___Early_blight',
+ 21: 'Potato___Late_blight',
+ 22: 'Potato___healthy',
+ 23: 'Raspberry___healthy',
+ 24: 'Soybean___healthy',
+ 25: 'Squash___Powdery_mildew',
+ 26: 'Strawberry___Leaf_scorch',
+ 27: 'Strawberry___healthy',
+ 28: 'Tomato___Bacterial_spot',
+ 29: 'Tomato___Early_blight',
+ 30: 'Tomato___Late_blight',
+ 31: 'Tomato___Leaf_Mold',
+ 32: 'Tomato___Septoria_leaf_spot',
+ 33: 'Tomato___Spider_mites Two-spotted_spider_mite',
+ 34: 'Tomato___Target_Spot',
+ 35: 'Tomato___Tomato_Yellow_Leaf_Curl_Virus',
+ 36: 'Tomato___Tomato_mosaic_virus',
+ 37: 'Tomato___healthy'}
+
